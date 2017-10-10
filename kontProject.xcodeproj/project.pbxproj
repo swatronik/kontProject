@@ -36,6 +36,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		84297E5F1F8C102700FE209D /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		84E49A5D1F8A5A7A005F7F33 /* kontProject.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kontProject.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84E49A601F8A5A7A005F7F33 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		84E49A621F8A5A7A005F7F33 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -78,6 +79,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		84297E5E1F8C102600FE209D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				84297E5F1F8C102700FE209D /* CoreLocation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		84E49A541F8A5A7A005F7F33 = {
 			isa = PBXGroup;
 			children = (
@@ -86,6 +95,7 @@
 				84E49A771F8A5A7A005F7F33 /* kontProjectTests */,
 				84E49A821F8A5A7A005F7F33 /* kontProjectUITests */,
 				84E49A5E1F8A5A7A005F7F33 /* Products */,
+				84297E5E1F8C102600FE209D /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
