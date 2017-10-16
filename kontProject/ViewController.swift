@@ -29,6 +29,7 @@ class inform: Object {
 
 class ViewController: UIViewController,CLLocationManagerDelegate {
     
+    var proverkaNull=0
     var realm = try! Realm()
     var city:String=""
     var locationManager:CLLocationManager!
@@ -38,7 +39,6 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
         let results = self.realm.objects(inform.self)
         if ((results.first != nil)){
             if((prover(date1: results[results.endIndex-1].date,date2: NSDate()))){
-        
         locationManager = CLLocationManager()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
@@ -47,9 +47,11 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
         let location = locationManager.location
         let local=location?.coordinate
         StartWeather(latitude: local!.latitude,longitude: local!.longitude)
-            }else{print("5 minut!!")}
+            }else { endScreen()}
             
-        }else{ locationManager = CLLocationManager()
+        }else{
+        proverkaNull=1
+        locationManager = CLLocationManager()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
         locationManager.requestAlwaysAuthorization()
@@ -57,6 +59,14 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
         let location = locationManager.location
         let local=location?.coordinate
         StartWeather(latitude: local!.latitude,longitude: local!.longitude)}
+    }
+    
+     func endScreen(){
+        performSegue(withIdentifier: "ViewWeatherSegue", sender: self)
+    }
+
+    func errorScreen(){
+        performSegue(withIdentifier: "Warning", sender: self)
     }
     
     func prover(date1:NSDate,date2:NSDate)->Bool{
@@ -105,7 +115,10 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
     }
     
     func GetWeather(city:String){
-        if city==""{print("error")}
+        if city==""{
+            if proverkaNull==1{errorScreen()}
+            else {endScreen()}
+        }
         else{
             let url:String="https://api.openweathermap.org/data/2.5/weather?q="+city.replacingOccurrences(of: " ", with: "")+"&units=metric&APPID=6f60a2e2eba0ac6d5868f11ba9b8c10b"
             request(url).responseJSON{
@@ -119,14 +132,14 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
                 print("sucsess")
                 let results = self.realm.objects(inform.self)
                 try! self.realm.write {
-                    inform1.city = self.city
+                    inform1.city = city
                     inform1.date = NSDate()
                     inform1.imageName=icon
                     inform1.temp = temp
                     inform1.id=results.count
                     self.realm.add(inform1)
                 }
-            print("sucsess")
+            self.endScreen()
             }
         }
     }
