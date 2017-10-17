@@ -15,12 +15,20 @@ import SwiftyJSON
 import RealmSwift
 import ObjectMapper
 
+class Connectivity {
+    class func isConnectedToInternet() ->Bool {
+        return NetworkReachabilityManager()!.isReachable
+    }
+}
+
+
 class inform: Object {
     @objc dynamic var city = ""
     @objc dynamic var temp = ""
     @objc dynamic var id = 0
     @objc dynamic var imageName = ""
     @objc dynamic var date = NSDate()
+    @objc dynamic var error = false
     
     override class func primaryKey() -> String? {
         return "id"
@@ -29,16 +37,20 @@ class inform: Object {
 
 class ViewController: UIViewController,CLLocationManagerDelegate {
     
+    @IBOutlet weak var cirleloading: UIActivityIndicatorView!
     var proverkaNull=0
-    var realm = try! Realm()
+    
     var city:String=""
     var locationManager:CLLocationManager!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        let results = self.realm.objects(inform.self)
+        let realm = try! Realm()
+        cirleloading.startAnimating()
+        let results = realm.objects(inform.self)
+        if Connectivity.isConnectedToInternet() {print ("Internet")} else {print("NO Internet")}
         if ((results.first != nil)){
-            if((prover(date1: results[results.endIndex-1].date,date2: NSDate()))){
+            if((prover(date1: results[results.endIndex-1].date,date2: NSDate())) && Connectivity.isConnectedToInternet()){
         locationManager = CLLocationManager()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
@@ -61,6 +73,22 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
         StartWeather(latitude: local!.latitude,longitude: local!.longitude)}
     }
     
+    func saveError(){
+        let realm = try! Realm()
+        let results = realm.objects(inform.self)
+        let inform1 = inform()
+        try! realm.write {
+            inform1.city = results[results.endIndex-1].city
+            inform1.date = results[results.endIndex-1].date
+            inform1.imageName=results[results.endIndex-1].imageName
+            inform1.temp = results[results.endIndex-1].temp
+            inform1.id=results[results.endIndex-1].id
+           inform1.error=true
+            realm.add(inform1)
+        }
+        self.endScreen()
+    }
+
      func endScreen(){
         performSegue(withIdentifier: "ViewWeatherSegue", sender: self)
     }
@@ -91,7 +119,7 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
             dateFormatter2.dateFormat = "mm"
             dateString2 = dateFormatter2.string(from: date2 as Date)
             mm2=mm2+Int(dateString2)!
-            if(mm2-mm1>5){return true}
+            if(abs(mm2-mm1)>5){return true}
             else {return false}
         }else{return true}
         
@@ -104,71 +132,43 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
     func StartWeather(latitude:Double,longitude:Double) {
         let url:String="https://maps.googleapis.com/maps/api/geocode/json?latlng="+String(latitude)+","+String(longitude)+"&key=AIzaSyAPcYRscbExn3cRxo0olCIRWamc6dvV7hU"
         var city:String=""
+        var ind:Int=0
         request(url,method:.get).responseJSON{
             respons in
+            ind=1;
             let swiftyJsonVar = JSON(respons.result.value!)
             var resData:String = swiftyJsonVar["results",1,"address_components",1,"long_name"].rawString()!
             self.safe(str1: &city,str2: &resData)
             self.GetWeather(city: city)
-        }
-
+            }
+        if proverkaNull==1{errorScreen()}
+        else {saveError()}
     }
     
     func GetWeather(city:String){
-        if city==""{
-            if proverkaNull==1{errorScreen()}
-            else {endScreen()}
-        }
-        else{
             let url:String="https://api.openweathermap.org/data/2.5/weather?q="+city.replacingOccurrences(of: " ", with: "")+"&units=metric&APPID=6f60a2e2eba0ac6d5868f11ba9b8c10b"
             request(url).responseJSON{
                 respons2 in
-                let swiftyJsonVar2 = JSON(respons2.result.value)
+                let swiftyJsonVar2 = JSON(respons2.result.value!)
                 let temp = swiftyJsonVar2["main","temp"].rawString()!
-                print(temp)
                 let icon = swiftyJsonVar2["weather",0,"icon"].rawString()!
-                print (icon)
-                var inform1 = inform()
-                print("sucsess")
-                let results = self.realm.objects(inform.self)
-                try! self.realm.write {
+                let inform1 = inform()
+                let realm = try! Realm()
+                let results = realm.objects(inform.self)
+                try! realm.write {
                     inform1.city = city
                     inform1.date = NSDate()
                     inform1.imageName=icon
                     inform1.temp = temp
                     inform1.id=results.count
-                    self.realm.add(inform1)
+                    inform1.error=false
+                    realm.add(inform1)
                 }
-            self.endScreen()
+                self.cirleloading.stopAnimating()
+                self.endScreen()
             }
-        }
+        saveError()
     }
-    
-   /*
-     http://openweathermap.org/img/w/10d.png
-     
-     func locationManager(_ manager:CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        let local=locations[0]
-
-        let kor:MKCoordinateSpan=MKCoordinateSpanMake(local.coordinate.latitude, local.coordinate.longitude)
-        let url:String="https://maps.googleapis.com/maps/api/geocode/json?latlng="+String(kor.latitudeDelta)+","+String(kor.longitudeDelta)+"&key=AIzaSyAPcYRscbExn3cRxo0olCIRWamc6dvV7hU"
-        request(url).responseJSON{
-            respons in
-            let swiftyJsonVar = JSON(respons.result.value!)
-            let resData = swiftyJsonVar["results",1,"address_components",1,"long_name"].rawString()
-         //   let url2:String="api.openweathermap.org/data/2.5/weather?q="+resData!+"&units=metric&APPID=6f60a2e2eba0ac6d5868f11ba9b8c10b"
-         //   request(url2).responseJSON{
-         //      respons2 in
-         //       let swiftyJsonVar2 = JSON(respons2.result.value!)
-           //     let resData2 = swiftyJsonVar2["main"]
-          //     print(swiftyJsonVar2)
-          //  }
-        }
-
-    }*/
-
-            
-    
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
