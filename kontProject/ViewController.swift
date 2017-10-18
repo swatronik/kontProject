@@ -28,7 +28,6 @@ class inform: Object {
     @objc dynamic var id = 0
     @objc dynamic var imageName = ""
     @objc dynamic var date = NSDate()
-    @objc dynamic var error = false
     
     override class func primaryKey() -> String? {
         return "id"
@@ -48,7 +47,6 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
         let realm = try! Realm()
         cirleloading.startAnimating()
         let results = realm.objects(inform.self)
-        if Connectivity.isConnectedToInternet() {print ("Internet")} else {print("NO Internet")}
         if ((results.first != nil)){
             if((prover(date1: results[results.endIndex-1].date,date2: NSDate())) && Connectivity.isConnectedToInternet()){
         locationManager = CLLocationManager()
@@ -73,22 +71,6 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
         StartWeather(latitude: local!.latitude,longitude: local!.longitude)}
     }
     
-    func saveError(){
-        let realm = try! Realm()
-        let results = realm.objects(inform.self)
-        let inform1 = inform()
-        try! realm.write {
-            inform1.city = results[results.endIndex-1].city
-            inform1.date = results[results.endIndex-1].date
-            inform1.imageName=results[results.endIndex-1].imageName
-            inform1.temp = results[results.endIndex-1].temp
-            inform1.id=results[results.endIndex-1].id
-           inform1.error=true
-            realm.add(inform1)
-        }
-        self.endScreen()
-    }
-
      func endScreen(){
         performSegue(withIdentifier: "ViewWeatherSegue", sender: self)
     }
@@ -142,7 +124,7 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
             self.GetWeather(city: city)
             }
         if proverkaNull==1{errorScreen()}
-        else {saveError()}
+        else {endScreen()}
     }
     
     func GetWeather(city:String){
@@ -161,13 +143,12 @@ class ViewController: UIViewController,CLLocationManagerDelegate {
                     inform1.imageName=icon
                     inform1.temp = temp
                     inform1.id=results.count
-                    inform1.error=false
                     realm.add(inform1)
                 }
                 self.cirleloading.stopAnimating()
                 self.endScreen()
             }
-        saveError()
+        endScreen()
     }
     
     override func didReceiveMemoryWarning() {
